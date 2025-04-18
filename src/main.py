@@ -1,50 +1,44 @@
 from datetime import datetime
-from uuid import uuid4
 #import numpy as np
 import click 
-from session import Session, format_dt, session_summary
-
-def session_builder() -> Session:
-    start = format_dt(datetime.now())
-    main_catg = click.prompt(
-            click.style(" - Main Category: ", fg="blue", bold= True)
-            ,type=str 
-        )
-    subcatg = click.prompt(
-            click.style("-- Subcategory: ", fg="bright_blue",bold=True)
-            ,type=str
-            )
-    
-    session: Session = Session(id=str(uuid4())
-                               ,category=subcatg
-                               ,main_category=main_catg
-                               ,start=start
-                               ,end=None
-                               ,active= True)
-    
-    return session
-
-
+from session import * 
 
 
 @click.command()
-@click.option("-init",is_flag= True, help="doesthis")
+@click.option("-start",is_flag= True, help="Start A Session")
+@click.option("-end", is_flag = True, help= "End Your Session")
+@click.option("-status", is_flag = True)
 #@click.argument("")
-def cli(init):
+def cli(start, end, status):
     
     dtnow = datetime.now()
 
     fmt_dtnow = format_dt(dt=dtnow) 
-    if init:
-        click.secho("\n Insert you activity details 📝", bold=True)
+    if check_status() == False :
+        if start:
+            click.secho("\n Insert you activity details 📝", bold=True)
         
 
-        session:Session = session_builder()
-        session_summary(session)
-        click.secho(f'\nStarting session at: {fmt_dtnow}', fg="green", bold=True)
-        session.save()
+            session:Session = session_builder()
+            session_summary(session)
+            click.secho(f'\nStarting session at: {fmt_dtnow}', fg="green", bold=True)
+            session.start_save()
+            session.init()
+        elif end:
+            click.secho("\n   ####################################" ,bold = False)
+            click.secho("   # Doesn\'t have any session running #", fg= "bright_white", bold =True)
+            click.secho("   ####################################\n", bold = False)
+    elif check_status() == True & end:
+        end_session()
+       
+    elif check_status() == True & end == False: 
+        click.secho("\n -- A Session is already Running --" , fg="red", bold=True)
+        click.secho("End your last session before starting another\n", fg="red", bold=False)
+    
+    if status == True:
+        session_stats()
+    
 
-        #click.echo(click.style("Warning!", fg="yellow"))
 
 
 if __name__ == "__main__":
