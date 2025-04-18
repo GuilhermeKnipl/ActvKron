@@ -1,6 +1,6 @@
 import os.path
 from uuid import uuid4
-from datetime import datetime 
+from datetime import date, datetime 
 from dataclasses import asdict, dataclass 
 import json
 import click
@@ -16,9 +16,9 @@ class Session:
     main_category: str
     category: str
     active: bool
-    
+    duration: str | None
 
-    def save(self):
+    def start_save(self):
         session_data = asdict(self)
         session_data.pop('active')
         tries = 0
@@ -68,13 +68,53 @@ def format_dt(dt:datetime,pprint:bool = False ) -> str:
     else:
         return dt.strftime("%Y-%m-%d %H:%M:%S")
 
+def check_status() -> bool:
+    with open(STATUS_PATH) as f:
+      status = json.load(f)
+      return status['is_active']
 
+def end_session():
+    with open(STATUS_PATH, 'r') as f:
+        status = json.load(f)
+        current_id = status['session_id']
+
+    with open(DATA_PATH, 'r') as f:
+        sessions = json.load(f)
+        for s in sessions:
+            if s['id'] == current_id:
+                s["end"] = format_dt(datetime.now())
+                end_time = datetime.strptime(s['end'], "%Y-%m-%d %H:%M:%S")
+                start_time = datetime.strptime(s['start'],"%Y-%m-%d %H:%M:%S")
+                duration = str(end_time - start_time)
+                s["duration"] = duration 
+                click.secho(f"\nSession endend with {s["duration"]}", fg="green", bold=True)
+
+    with open(DATA_PATH, 'w') as fw:
+        json.dump(sessions, fw , indent=4 )
+
+    status_data = {
+             "session_id": "0",
+             "is_active": False
+             }
+
+    with open(STATUS_PATH, "w") as f:
+            json.dump(status_data, f, indent=1)
+        
+
+def session_stats():
+
+    with open(STATUS_PATH, "r") as f:
+        data = json.load(f)
+        status = data['is_active']
+        if status:
+            click.secho("Session Is Running", fg="blue", bold=True)
+        else: 
+            click.secho("Session Ended", fg="blue", bold=True)
 
 def session_summary(session: Session):
     click.secho(f"\nSession Id: {session.id}", fg="yellow", bold=True)
     click.secho(f"\n{session.start}", fg="cyan", bold=True)
     click.secho(f"\nMain Category: {session.main_category}", fg="bright_blue", bold=True)
-
 
 def session_builder() -> Session:
     start = format_dt(datetime.now())
@@ -87,10 +127,16 @@ def session_builder() -> Session:
             ,type=str
             )
     
-    session: Session = Session(id=str(uuid4()), category=subcatg, main_category=main_catg
-                               , start=start, end= None)
-    session.init() 
+    session: Session = Session(id=str(uuid4())
+                               ,category=subcatg
+                               ,main_category=main_catg
+                               ,start=start
+                               ,end=None
+                               ,active= True
+                               ,duration = None)
+    
     return session
+
 
 
 
