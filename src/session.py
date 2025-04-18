@@ -61,10 +61,6 @@ class Session:
         except Exception as err:
             print(err)
 
-    def session_status()
-        
-
-
 
 def format_dt(dt:datetime,pprint:bool = False ) -> str:
     if (pprint):
