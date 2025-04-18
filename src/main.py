@@ -2,20 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 #import numpy as np
 import click 
-from session import Session 
-
-def format_dt(dt:datetime,pprint:bool = False ) -> str:
-    if (pprint):
-        return dt.strftime("Date: %Y-%m-%d \nTime: %H:%M:%S")
-    else:
-        return dt.strftime("%Y-%m-%d %H:%M:%S")
-
-
-def session_summary(session: Session):
-    click.secho(f"\nSession Id: {session.id}", fg="yellow", bold=True)
-    click.secho(f"\n{session.start}", fg="cyan", bold=True)
-    click.secho(f"\nMain Category: {session.main_category}", fg="bright_blue", bold=True)
-
+from session import Session, format_dt, session_summary
 
 def session_builder() -> Session:
     start = format_dt(datetime.now())
@@ -28,9 +15,13 @@ def session_builder() -> Session:
             ,type=str
             )
     
-    session: Session = Session(id=str(uuid4()), category=subcatg, main_category=main_catg
-                               , start=start, end= None)
-    session.init() 
+    session: Session = Session(id=str(uuid4())
+                               ,category=subcatg
+                               ,main_category=main_catg
+                               ,start=start
+                               ,end=None
+                               ,active= True)
+    
     return session
 
 
