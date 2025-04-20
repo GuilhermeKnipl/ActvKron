@@ -5,8 +5,8 @@ from dataclasses import asdict, dataclass
 import json
 import click
 
-DATA_PATH = "data/session.json"
-STATUS_PATH = "data/status.json"
+STATUS_PATH = os.path.expanduser('~/desktop/ActvKron/data/status.json')
+DATA_PATH = os.path.expanduser("~/desktop/lynx/ActvKron/data/session.json")
 
 @dataclass
 class Session:
@@ -69,6 +69,7 @@ def format_dt(dt:datetime,pprint:bool = False ) -> str:
         return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 def check_status() -> bool:
+
     with open(STATUS_PATH) as f:
       status = json.load(f)
       return status['is_active']
@@ -105,11 +106,26 @@ def session_stats():
 
     with open(STATUS_PATH, "r") as f:
         data = json.load(f)
+        current_id = data['session_id']
         status = data['is_active']
         if status:
-            click.secho("Session Is Running", fg="blue", bold=True)
+            with open(DATA_PATH, 'r') as f:
+                    sessions = json.load(f)
+            for s in sessions:
+                if s['id'] == current_id:
+                    now_dt = format_dt(datetime.now())
+                    time_now = datetime.strptime(now_dt, "%Y-%m-%d %H:%M:%S")
+                    start_time = datetime.strptime(s['start'],"%Y-%m-%d %H:%M:%S")
+                    duration = str(time_now - start_time)
+
+                    click.secho("----------------------", fg="blue", bold=False)
+                    click.secho("Session Is Running", fg="blue", bold=True)
+                    click.secho(f"Session Time: {duration}", fg="blue", bold=True)
+                    click.secho("----------------------", fg="blue", bold=False)
+
         else: 
             click.secho("Session Ended", fg="blue", bold=True)
+
 
 def session_summary(session: Session):
     click.secho(f"\nSession Id: {session.id}", fg="yellow", bold=True)
